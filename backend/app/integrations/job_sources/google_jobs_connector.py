@@ -40,10 +40,12 @@ class GoogleJobsConnector(BaseJobSource):
         params = {
             "engine": "google_jobs",
             "q": query,
-            "location": location or "United States",
             "api_key": settings.SERPAPI_KEY,
             "num": min(limit, 50),
         }
+        # Only add location if not "remote" (causes 400)
+        if location and "remote" not in location.lower():
+            params["location"] = location
 
         try:
             r = requests.get("https://serpapi.com/search", params=params, timeout=20)

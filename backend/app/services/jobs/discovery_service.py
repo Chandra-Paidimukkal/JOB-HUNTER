@@ -23,6 +23,7 @@ from app.integrations.job_sources.wellfound_connector import WellfoundConnector
 from app.integrations.job_sources.weworkremotely_connector import WeWorkRemotelyConnector
 from app.integrations.job_sources.naukri_connector import NaukriConnector
 from app.integrations.job_sources.google_jobs_connector import GoogleJobsConnector
+from app.integrations.job_sources.openwebninja_connector import OpenWebNinjaConnector
 
 logger = logging.getLogger(__name__)
 
@@ -39,8 +40,9 @@ FREE_CONNECTORS = [
 OPTIONAL_CONNECTORS = [
     NaukriConnector(),           # India jobs — always works
     AdzunaConnector(),           # Needs ADZUNA_APP_ID + ADZUNA_API_KEY
-    JSearchConnector(),          # Needs JSEARCH_API_KEY (RapidAPI)
-    GoogleJobsConnector(),       # Needs SERPAPI_KEY (100 free/day)
+    JSearchConnector(),          # Needs JSEARCH_API_KEY (legacy RapidAPI)
+    OpenWebNinjaConnector(),     # LinkedIn+Indeed+Glassdoor via OWN — KEY SET ✓
+    GoogleJobsConnector(),       # Google Jobs via SerpAPI — KEY SET ✓
 ]
 
 ALL_CONNECTORS = FREE_CONNECTORS + OPTIONAL_CONNECTORS

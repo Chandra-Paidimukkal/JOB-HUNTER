@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     ADZUNA_API_KEY: str = ""
     JSEARCH_API_KEY: str = ""
     SERPAPI_KEY: str = ""
+    OPENWEBNINJA_KEY: str = ""
 
     # SMTP
     SMTP_HOST: str = "smtp.gmail.com"

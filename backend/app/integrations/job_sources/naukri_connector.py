@@ -25,6 +25,8 @@ class NaukriConnector(BaseJobSource):
         "Referer": "https://www.naukri.com/",
         "appid": "109",
         "systemid": "109",
+        "gid": "LOCATION,INDUSTRY,EDUCATION,FAREA_ROLE",
+        "Content-Type": "application/json",
     }
 
     def is_configured(self) -> bool:
