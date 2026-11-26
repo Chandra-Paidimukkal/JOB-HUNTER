@@ -48,8 +48,14 @@ python-slugify==8.0.4
 email-validator==2.1.2
 cryptography==42.0.8
 
-# Testing
-pytest==8.2.2
+# Web scraping (job boards)
+jobspy2==0.0.8
+aiohttp==3.14.5
+fake-useragent==2.2.0
+cssselect==1.6.0
 pytest-asyncio==0.23.7
 httpx==0.27.0
 factory-boy==3.3.0
+
+# Testing
+pytest==8.2.2
