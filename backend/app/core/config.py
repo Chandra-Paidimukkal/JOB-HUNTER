@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     ADZUNA_APP_ID: str = ""
     ADZUNA_API_KEY: str = ""
     JSEARCH_API_KEY: str = ""
+    SERPAPI_KEY: str = ""
 
     # SMTP
     SMTP_HOST: str = "smtp.gmail.com"

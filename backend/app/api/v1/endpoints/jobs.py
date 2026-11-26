@@ -307,7 +307,7 @@ def trigger_discovery(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Trigger background job discovery."""
+    """Trigger background job discovery from ALL sources (LinkedIn, Indeed, Glassdoor, Google, Naukri, company ATS...)."""
     background_tasks.add_task(
         run_job_discovery,
         db=db,
@@ -315,4 +315,85 @@ def trigger_discovery(
         keywords=keywords,
         location=location,
     )
-    return {"message": "Job discovery started. New jobs will appear shortly."}
+    return {
+        "message": "Job discovery started from all sources. New jobs will appear shortly.",
+        "sources": ["LinkedIn", "Indeed", "Glassdoor", "Google Jobs", "ZipRecruiter",
+                     "Naukri", "Greenhouse", "Lever", "Ashby", "Wellfound",
+                     "WeWorkRemotely", "Remotive", "Adzuna", "JSearch"],
+    }
+
+
+class TargetedSearchRequest(BaseModel):
+    company_websites: List[str]
+    keywords: Optional[List[str]] = None
+
+
+@router.post("/discover/companies")
+def targeted_company_search(
+    payload: TargetedSearchRequest,
+    background_tasks: BackgroundTasks,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Crawl specific company career pages for their job postings."""
+    from app.services.jobs.discovery_service import run_targeted_company_search
+
+    def run():
+        run_targeted_company_search(
+            db=db, user=current_user,
+            company_websites=payload.company_websites,
+            keywords=payload.keywords,
+        )
+
+    background_tasks.add_task(run)
+    return {
+        "message": f"Crawling {len(payload.company_websites)} company career pages...",
+        "companies": payload.company_websites,
+    }
+
+
+@router.post("/discover/company/{company_name}")
+def crawl_single_company(
+    company_name: str,
+    website: str = Query(...),
+    background_tasks: BackgroundTasks = None,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Crawl a single company's career page for job listings."""
+    from app.integrations.job_sources.career_crawler import CareerPageCrawler
+    from app.services.jobs.discovery_service import (
+        build_search_keywords, compute_job_fingerprint, listing_to_job
+    )
+    from app.models.user import JobPreferences
+
+    preferences = db.query(JobPreferences).filter(
+        JobPreferences.user_id == current_user.id
+    ).first()
+    keywords = build_search_keywords(preferences)
+
+    crawler = CareerPageCrawler(company_name=company_name, website=website)
+    listings = crawler.crawl_company(website, company_name, keywords, limit=30)
+
+    new_jobs = 0
+    existing_fps = {j.external_id for j in db.query(Job.external_id).all()}
+    for listing in listings:
+        if not listing.title or not listing.apply_url:
+            continue
+        fp = compute_job_fingerprint(listing)
+        if fp in existing_fps:
+            continue
+        existing_fps.add(fp)
+        db.add(listing_to_job(listing, fp))
+        new_jobs += 1
+    db.commit()
+
+    return {
+        "company": company_name,
+        "jobs_found": len(listings),
+        "new_jobs_saved": new_jobs,
+        "jobs": [
+            {"title": j.title, "apply_url": j.apply_url, "location": j.location}
+            for j in listings[:20]
+        ],
+    }
